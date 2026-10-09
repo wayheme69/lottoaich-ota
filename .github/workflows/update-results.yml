@@ -1,0 +1,29 @@
+name: Update Swiss Lotto + EuroMillions results
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch results (Loterie Romande + Swisslos)
+        run: python3 scripts/ch_results.py
+      - name: Commit if changed
+        run: |
+          git config user.name "results-bot"
+          git config user.email "actions@github.com"
+          git add ch_results.json
+          if ! git diff --cached --quiet; then
+            git commit -m "results: $(date -u +%Y-%m-%dT%H:%MZ)"
+            git pull --rebase origin main
+            git push
+          else
+            echo "No change."
+          fi
